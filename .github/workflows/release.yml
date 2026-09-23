@@ -49,4 +49,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           sha256sum dist/*.zip dist/*.tar.gz dist/*.whl > dist/SHA256SUMS.txt
-          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "众测雷达 CLI $GITHUB_REF_NAME" --notes "Native Windows/Linux/macOS executables and Python packages. See README for uv and uvx usage. No credentials are bundled."
+          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "DRadar Dashboard $GITHUB_REF_NAME" --notes "Dashboard wrapper for Crowd Radar and the official DRadar CLI. Includes IQ briefing, recommendations and task workflow skill. Native Windows/Linux/macOS executables and Python packages. See README for renamed uv/uvx entry points. No credentials are bundled."

@@ -489,7 +489,7 @@ def run(api, args):
                     view.handle(key, len(lines), height)
             if dirty or clock - last_paint >= 1:
                 traffic = snapshot.get('traffic', {})
-                title = f" 众测雷达 | {args.harness} | {args.benchmark} | IQ 优先 "
+                title = f" DRadar Dashboard · 众测雷达 | {args.harness} | {args.benchmark} | IQ 优先 "
                 status = f" 在线 {fmt(traffic.get('online'))}人  全站并发 {fmt(traffic.get('site', {}).get('running'))}道  "
                 status += '刷新中…' if loading else f"更新 {snapshot.get('observed_at', '未知')}  {max(0, int(next_refresh-clock))}秒后刷新"
                 if snapshot.get('cached'):

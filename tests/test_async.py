@@ -5,13 +5,13 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from zhongce_radar import radar
-from zhongce_radar import radar_tui as ui
+from dradar_dashboard import radar
+from dradar_dashboard import radar_tui as ui
 
 
 class AsyncDashboardTests(unittest.IsolatedAsyncioTestCase):
     async def test_async_account_scope_keeps_latest_claude_record_in_codex_dashboard(self):
-        from zhongce_radar.radar_async import load_dashboard
+        from dradar_dashboard.radar_async import load_dashboard
         class API:
             async def get(self, name, **query):
                 if name == 'my-submissions':
@@ -28,7 +28,7 @@ class AsyncDashboardTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_real_aiohttp_fast_response_is_not_blocked_by_slow_socket(self):
         from aiohttp import web, ClientSession
-        from zhongce_radar.radar_http import request
+        from dradar_dashboard.radar_http import request
         release = asyncio.Event()
         async def slow(req):
             await release.wait()
@@ -56,7 +56,7 @@ class AsyncDashboardTests(unittest.IsolatedAsyncioTestCase):
             await runner.cleanup()
 
     async def test_iq_and_personal_render_before_slow_table(self):
-        from zhongce_radar.radar_async import load_dashboard
+        from dradar_dashboard.radar_async import load_dashboard
         release = asyncio.Event()
         updates = []
         class API:
@@ -87,7 +87,7 @@ class AsyncDashboardTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result['partial_loading'])
 
     async def test_timeout_cancels_only_pending_io(self):
-        from zhongce_radar.radar_async import load_dashboard
+        from dradar_dashboard.radar_async import load_dashboard
         from types import SimpleNamespace
         cancelled = asyncio.Event()
         started = []
@@ -103,14 +103,14 @@ class AsyncDashboardTests(unittest.IsolatedAsyncioTestCase):
         args = radar.parser().parse_args(['codex', 'dashboard'])
         # Expire after the first I/O scheduling round, independent of OS timing.
         clock = SimpleNamespace(monotonic=lambda: 0 if len(started) < 7 else 1)
-        with patch('zhongce_radar.radar_async.time', clock):
+        with patch('dradar_dashboard.radar_async.time', clock):
             result = await load_dashboard(API(), args, timeout=.5)
         self.assertTrue(cancelled.is_set())
         self.assertEqual(result['identity']['nickname'], 'loaded')
         self.assertIn('iq', result['errors'])
 
     async def test_http_redirect_never_forwards_private_token(self):
-        from zhongce_radar.radar_http import AsyncAPI
+        from dradar_dashboard.radar_http import AsyncAPI
         from unittest.mock import Mock, AsyncMock
         response = Mock(status=302)
         context = Mock(__aenter__=AsyncMock(return_value=response), __aexit__=AsyncMock(return_value=False))
@@ -128,7 +128,7 @@ class AsyncDashboardTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(request.kwargs['allow_redirects'])
 
     async def test_async_transport_refuses_claim_endpoint(self):
-        from zhongce_radar.radar_async import AsyncAPI
+        from dradar_dashboard.radar_async import AsyncAPI
         api = AsyncAPI(radar.API(), None)
         with self.assertRaises(radar.RadarError):
             await api.get('assignment', private=True)

@@ -1,8 +1,29 @@
-# 众测雷达 CLI · Zhongce Radar
+# DRadar Dashboard · 众测雷达终端看板
 
-[![CI](https://github.com/sdy623/zhongce-radar-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/sdy623/zhongce-radar-cli/actions/workflows/ci.yml)
+[![CI](https://github.com/sdy623/dradar-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/sdy623/dradar-dashboard/actions/workflows/ci.yml)
 
-非官方 [众测雷达](https://deng.codexradar.com/) 终端客户端。Python 3.11+，支持 Windows、Linux、macOS，无需 PowerShell。
+基于 [众测雷达（Crowd Radar）](https://deng.codexradar.com/) 与[官方 DRadar CLI](https://github.com/codex-radar/dradar) 的非官方包装。网页信息汇总、IQ 简报、模型推荐和任务控制集中在这个终端看板中。Python 3.11+，支持 Windows、Linux、macOS，无需 PowerShell。
+
+| 名称 | 对应内容 |
+| --- | --- |
+| 众测雷达 / Crowd Radar | 官方网站 `deng.codexradar.com` |
+| DRadar / `dradar` | 官方运行器，负责领题、执行、上传与查询服务端判分 |
+| DRadar Dashboard / `dradar-dashboard` | 本仓库的 CLI 包装与终端看板 |
+| 网站 API | 网站提供的数据接口；不是另一个 CLI 或项目名称 |
+
+命名依据：[官方项目元数据](https://github.com/codex-radar/dradar/blob/main/pyproject.toml)。本项目不占用 `dradar` 命令、不复制官方运行器，也不自行实现判分与上传协议。
+
+## 基于包装 CLI 的 Skill
+
+仓库自带 [dradar-dashboard Skill](skills/dradar-dashboard/SKILL.md)，支持 Codex 和 Claude Code：
+
+- 模型 IQ 简报：分别给出最高 IQ 与最高 IQ／API 等价费用，保留覆盖率、样本和数据时间。
+- 使用推荐：按模型代际分组，只从已确认可用的模型中推荐；没有可用性证据时明确标注。
+- 任务提交：经本包装的 `prepare` / `run` / `progress` / `upload`，交给已配置的官方 DRadar 运行器；上传成功和判分完成分别验证。
+
+将 `skills/dradar-dashboard` 文件夹放到 Codex 的 `~/.codex/skills/` 或 Claude Code 的 `~/.claude/skills/`。调用示例：`使用 dradar-dashboard，给我 Codex 模型 IQ 简报，并推荐性价比最好和 IQ 最高的各一个。` Skill 不会把查询需求当成运行题目的授权。
+
+v0.2.0 将原 `zhongce-radar-cli` 更名为 `dradar-dashboard`。原 `radar` / `radar-codex` / `radar-claude` 入口已移除，改用本页新命令；旧包若仍安装，请先卸载再安装新版。官方 `DRADAR_HOME` 不变；包装配置和缓存目录改为 `dradar-dashboard`，可用 `DRADAR_DASHBOARD_CONFIG` 显式指向原配置，无需迁移官方数据或凭据。
 
 首页优先显示模型 IQ，可用方向键、鼠标滚轮上下浏览。包含站点在线人数、并发任务、本人排名、全账号提交与判分记录、高倍率候选、题目大表。网站请求统一使用 **aiohttp + asyncio**，各板块独立更新，慢大表不阻塞 IQ。
 
@@ -11,8 +32,8 @@
 从 GitHub 固定版本运行，无需克隆：
 
 ```sh
-uvx --from git+https://github.com/sdy623/zhongce-radar-cli@v0.1.0 radar
-uvx --from git+https://github.com/sdy623/zhongce-radar-cli@v0.1.0 radar-claude
+uvx --from git+https://github.com/sdy623/dradar-dashboard@v0.2.0 dradar-dashboard
+uvx --from git+https://github.com/sdy623/dradar-dashboard@v0.2.0 dradar-dashboard-claude
 ```
 
 `uv tool run` 与 `uvx` 等价。首次运行需要下载依赖，之后使用 uv 缓存。**目前未发布到 PyPI**，不能省略 `--from` 直接把包名当作已发布的 PyPI 包。
@@ -20,40 +41,40 @@ uvx --from git+https://github.com/sdy623/zhongce-radar-cli@v0.1.0 radar-claude
 克隆后使用 uv：
 
 ```sh
-git clone https://github.com/sdy623/zhongce-radar-cli.git
-cd zhongce-radar-cli
-uv run radar
-uv run radar-codex submissions --limit 10
-uv run radar-claude dashboard --json
+git clone https://github.com/sdy623/dradar-dashboard.git
+cd dradar-dashboard
+uv run dradar-dashboard
+uv run dradar-dashboard-codex submissions --limit 10
+uv run dradar-dashboard-claude dashboard --json
 ```
 
 也可直接使用 Python：
 
 ```sh
 python -m pip install .
-python -m zhongce_radar
-python radar.py codex submissions --limit 10
+python -m dradar_dashboard
+python dashboard.py codex submissions --limit 10
 ```
 
-Windows 的 Python 启动器也可用 `py -m zhongce_radar`。二进制下载见 [Releases](https://github.com/sdy623/zhongce-radar-cli/releases)：解压后运行 `radar` / `radar.exe`，不需要单独安装 Python。通用二进制用 `radar claude-code` 切换 Claude。
+Windows 的 Python 启动器也可用 `py -m dradar_dashboard`。二进制下载见 [Releases](https://github.com/sdy623/dradar-dashboard/releases)：解压后运行 `dradar-dashboard` / `dradar-dashboard.exe`，不需要单独安装 Python。通用二进制用 `dradar-dashboard claude-code` 切换 Claude。
 
 ## 入口与常用命令
 
 ```sh
-radar                         # 默认 Codex；交互终端打开滚动页面
-radar claude-code             # Claude 视图
-radar benchmarks              # 公共题库，无需登录
-radar whoami --json
-radar rank --period month
-radar submissions --limit 20
-radar submissions --records-scope current
-radar hot --model gpt-6-astra --effort max
-radar dashboard --json        # 一次性快照，适合自动化
-radar local status --json     # 只读本地保存状态
-radar config                  # 显示数据、配置、缓存位置，不显示凭据
+dradar-dashboard                         # 默认 Codex；交互终端打开滚动页面
+dradar-dashboard claude-code             # Claude 视图
+dradar-dashboard benchmarks              # 公共题库，无需登录
+dradar-dashboard whoami --json
+dradar-dashboard rank --period month
+dradar-dashboard submissions --limit 20
+dradar-dashboard submissions --records-scope current
+dradar-dashboard hot --model gpt-6-astra --effort max
+dradar-dashboard dashboard --json        # 一次性快照，适合自动化
+dradar-dashboard local status --json     # 只读本地保存状态
+dradar-dashboard config                  # 显示数据、配置、缓存位置，不显示凭据
 ```
 
-`radar-codex`、`radar-claude` 是同一程序的便捷入口。管道和 `--json` 默认使用一次性看板。`--benchmark` 切换题库，`--period all` 查看所有月份，`--watch --interval 60` 定期查询。
+`dradar-dashboard-codex`、`dradar-dashboard-claude` 是同一程序的便捷入口。管道和 `--json` 默认使用一次性看板。`--benchmark` 切换题库，`--period all` 查看所有月份，`--watch --interval 60` 定期查询。
 
 | 按键 | 功能 |
 | --- | --- |
@@ -66,11 +87,11 @@ radar config                  # 显示数据、配置、缓存位置，不显示
 
 ## 身份与配置
 
-默认读取官方客户端已有的 `~/.dradar/config.json` 中的雷达身份，也支持 `DRADAR_HOME` 或 `--home` 指定数据目录。**不会读取模型登录文件，也不会复制原凭据**。可选择通过进程环境变量 `RADAR_TOKEN` 传入雷达 Token；勿将它写进命令行参数、脚本仓库或 issue。
+默认读取官方客户端已有的 `~/.dradar/config.json` 中的雷达身份，也支持 `DRADAR_HOME` 或 `--home` 指定数据目录。**不会读取模型登录文件，也不会复制原凭据**。可选择通过进程环境变量 `DRADAR_DASHBOARD_TOKEN` 传入雷达 Token；勿将它写进命令行参数、脚本仓库或 issue。
 
 公开 IQ 和题库不要求个人身份。未登录时个人板块显示缺失，不伪造 0 条记录。凭据固定发送到 `https://api.codexradar.com`；拒绝重定向，终端输出脱敏。
 
-`radar config` 显示平台对应的客户端配置位置。`--config` / `RADAR_CONFIG_FILE` 可覆盖。此配置与官方认证文件分离。例如：
+`dradar-dashboard config` 显示平台对应的客户端配置位置。`--config` / `DRADAR_DASHBOARD_CONFIG` 可覆盖。此配置与官方认证文件分离。例如：
 
 ```json
 {
@@ -110,7 +131,7 @@ radar config                  # 显示数据、配置、缓存位置，不显示
 
 运行器须由你按网站的版本和模型路由要求准备，本工具不下载、不升级、不替换官方运行器。也可将 `command` 配置为自己的跨平台包装器。缺少配置时直接失败，不回退另一通道。所有参数以数组交给 `subprocess`，不经过 shell 字符串拼接；子进程继承 UTF-8 和 DRADAR_HOME。
 
-支持 `prepare`、`run --dry-run`、`run`、`progress`、`stop`、`upload`，保留计划 harness、到期、并发、非 ultra 和补领范围检查。运行码建议通过 `RADAR_PLAN_CODE` 环境变量提供。写操作不允许 `--watch`。精确命令文件保留 `FilePath` / `ArgumentList`；需要显式 `runtime.allow_exact_commands=true`，不会改写版本和参数。
+支持 `prepare`、`run --dry-run`、`run`、`progress`、`stop`、`upload`，保留计划 harness、到期、并发、非 ultra 和补领范围检查。运行码建议通过 `DRADAR_DASHBOARD_PLAN_CODE` 环境变量提供。写操作不允许 `--watch`。精确命令文件保留 `FilePath` / `ArgumentList`；需要显式 `runtime.allow_exact_commands=true`，不会改写版本和参数。
 
 已包含 `dradar-tenbin.ps1` 的受管理项目仍使用原项目控制入口；通用客户端拒绝替换其强制路由。此发行版没有执行真实评测的自动验收，只通过运行器替身验证控制分发。
 

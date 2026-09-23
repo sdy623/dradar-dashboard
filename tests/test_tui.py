@@ -6,15 +6,15 @@ import tempfile
 import unittest
 import contextlib
 import io
-from zhongce_radar import radar
+from dradar_dashboard import radar
 import threading
 import time
 
 
 class DashboardTests(unittest.TestCase):
     def setUp(self):
-        self.assertIsNotNone(importlib.util.find_spec('zhongce_radar.radar_tui'), 'Scrollable IQ dashboard is not implemented')
-        from zhongce_radar import radar_tui
+        self.assertIsNotNone(importlib.util.find_spec('dradar_dashboard.radar_tui'), 'Scrollable IQ dashboard is not implemented')
+        from dradar_dashboard import radar_tui
         self.ui = radar_tui
 
     def table(self):

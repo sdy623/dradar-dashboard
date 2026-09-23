@@ -3,9 +3,9 @@ requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
 
 [project]
-name = "zhongce-radar-cli"
-version = "0.1.0"
-description = "Cross-platform terminal client for 众测雷达: IQ, cost efficiency, tasks and contribution rankings"
+name = "dradar-dashboard"
+version = "0.2.0"
+description = "Unofficial dashboard wrapper for Crowd Radar and the official DRadar CLI: IQ, recommendations and task workflows"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -22,20 +22,19 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/sdy623/zhongce-radar-cli"
-Issues = "https://github.com/sdy623/zhongce-radar-cli/issues"
+Homepage = "https://github.com/sdy623/dradar-dashboard"
+Issues = "https://github.com/sdy623/dradar-dashboard/issues"
 
 [project.scripts]
-radar = "zhongce_radar.cli:main"
-radar-codex = "zhongce_radar.cli:codex"
-radar-claude = "zhongce_radar.cli:claude"
-zhongce-radar-cli = "zhongce_radar.cli:main"
+dradar-dashboard = "dradar_dashboard.cli:main"
+dradar-dashboard-codex = "dradar_dashboard.cli:codex"
+dradar-dashboard-claude = "dradar_dashboard.cli:claude"
 
 [dependency-groups]
 build = ["pyinstaller>=6.16,<7", "packaging>=24"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/zhongce_radar"]
+packages = ["src/dradar_dashboard"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "scripts", "radar.py", "pyproject.toml", "uv.lock", "LICENSE", "README.md", "CHANGELOG.md", "examples", ".github"]
+include = ["src", "tests", "scripts", "dashboard.py", "pyproject.toml", "uv.lock", "LICENSE", "README.md", "CHANGELOG.md", "skills", ".github"]

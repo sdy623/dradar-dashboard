@@ -1,0 +1,4 @@
+interface:
+  display_name: "DRadar Dashboard"
+  short_description: "众测雷达 CLI 包装：模型 IQ 简报、费效比推荐与官方任务提交"
+  default_prompt: "使用 $dradar-dashboard，通过我的 CLI 包装生成模型 IQ 简报，推荐 IQ 最高与性价比最好的模型，并按我的明确范围处理任务提交。"

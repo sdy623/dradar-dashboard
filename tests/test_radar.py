@@ -11,7 +11,7 @@ import os
 import unittest
 from unittest.mock import patch, Mock
 
-from zhongce_radar import radar
+from dradar_dashboard import radar
 
 
 def args(**kw):
@@ -131,13 +131,13 @@ class QueryTests(unittest.TestCase):
         self.assertIn('判分', text)
 
     def test_public_query_does_not_read_auth_or_launch(self):
-        from zhongce_radar.radar_http import prepare
-        with patch('zhongce_radar.radar.read_json', side_effect=AssertionError('auth read')), patch('zhongce_radar.radar.dispatch', side_effect=AssertionError('launch')):
+        from dradar_dashboard.radar_http import prepare
+        with patch('dradar_dashboard.radar.read_json', side_effect=AssertionError('auth read')), patch('dradar_dashboard.radar.dispatch', side_effect=AssertionError('launch')):
             url, headers = prepare(radar.API(), 'benchmarks')
         self.assertNotIn('Authorization', headers)
 
     def test_private_auth_sent_only_as_header(self):
-        from zhongce_radar.radar_http import prepare
+        from dradar_dashboard.radar_http import prepare
         with tempfile.TemporaryDirectory() as folder:
             home = Path(folder)
             (home / 'config.json').write_text(json.dumps({'server': radar.SERVER, 'token': 'secret-value'}), encoding='utf-8')
@@ -149,7 +149,7 @@ class QueryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             home = Path(folder)
             (home / 'config.json').write_text(json.dumps({'server': 'https://wrong.example', 'token': 'secret'}), encoding='utf-8')
-            with patch('zhongce_radar.radar_http.portal', side_effect=AssertionError('network')):
+            with patch('dradar_dashboard.radar_http.portal', side_effect=AssertionError('network')):
                 with self.assertRaises(radar.RadarError):
                     radar.API(home).get('whoami', private=True)
 
@@ -205,24 +205,24 @@ class ControlTests(unittest.TestCase):
             radar.validate_plan(state, 'codex', execution=True)
 
     def test_dry_run_never_dispatches_or_prepares(self):
-        with patch('zhongce_radar.radar.saved_plan', return_value=plan()), patch('zhongce_radar.radar.dispatch', side_effect=AssertionError('launch')), patch('zhongce_radar.radar.prepare', side_effect=AssertionError('exchange')):
+        with patch('dradar_dashboard.radar.saved_plan', return_value=plan()), patch('dradar_dashboard.radar.dispatch', side_effect=AssertionError('launch')), patch('dradar_dashboard.radar.prepare', side_effect=AssertionError('exchange')):
             result = radar.control(args())
             self.assertFalse(result['started'])
             self.assertEqual(result['concurrency']['value'], 2)
 
     def test_execution_uses_project_route_and_keeps_effort(self):
-        with patch('zhongce_radar.radar.prepare', return_value=plan(effort='low')), patch('zhongce_radar.radar.dispatch', return_value=(0, '')) as dispatch:
+        with patch('dradar_dashboard.radar.prepare', return_value=plan(effort='low')), patch('dradar_dashboard.radar.dispatch', return_value=(0, '')) as dispatch:
             radar.control(args(dry_run=False))
         self.assertEqual(dispatch.call_args.args[0], 'control')
         self.assertEqual(dispatch.call_args.args[1], ['run', '--plan', 'example-run-code', '--json'])
 
     def test_upload_only_never_adds_a_new_run(self):
-        with patch('zhongce_radar.radar.prepare', return_value=plan(effort='ultra')), patch('zhongce_radar.radar.dispatch', return_value=(0, '')) as dispatch:
+        with patch('dradar_dashboard.radar.prepare', return_value=plan(effort='ultra')), patch('dradar_dashboard.radar.dispatch', return_value=(0, '')) as dispatch:
             radar.control(args(dry_run=False, command='upload'))
         self.assertIn('--upload-only', dispatch.call_args.args[1])
 
     def test_route_failure_propagates_without_retry_or_fallback(self):
-        with patch('zhongce_radar.radar.prepare', return_value=plan()), patch('zhongce_radar.radar.dispatch', return_value=(7, '')) as dispatch:
+        with patch('dradar_dashboard.radar.prepare', return_value=plan()), patch('dradar_dashboard.radar.dispatch', return_value=(7, '')) as dispatch:
             result = radar.control(args(dry_run=False))
         self.assertEqual(result['exit_code'], 7)
         self.assertEqual(dispatch.call_count, 1)
@@ -233,12 +233,12 @@ class ControlTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'command.json'
             path.write_text(json.dumps({'FilePath': 'uvx.exe', 'ArgumentList': values}), encoding='utf-8')
-            with patch('zhongce_radar.radar.prepare', return_value=plan()), patch('zhongce_radar.radar.dispatch', return_value=(0, '')) as dispatch:
+            with patch('dradar_dashboard.radar.prepare', return_value=plan()), patch('dradar_dashboard.radar.dispatch', return_value=(0, '')) as dispatch:
                 radar.control(args(dry_run=False, command_file=str(path)))
             self.assertEqual(dispatch.call_args.args, ('exact', values, 'uvx.exe'))
 
     def test_confirm_requires_matching_previous_operation(self):
-        with patch('zhongce_radar.radar.saved_plan', return_value=plan()):
+        with patch('dradar_dashboard.radar.saved_plan', return_value=plan()):
             with self.assertRaises(radar.RadarError):
                 radar.control(args(confirm=True))
 
@@ -247,7 +247,7 @@ class ControlTests(unittest.TestCase):
             radar.main(['codex', 'run', '--plan', 'test-code', '--watch'])
 
     def test_unknown_progress_does_not_register_a_code(self):
-        with patch('zhongce_radar.radar.saved_plan', return_value=None), patch('zhongce_radar.radar.dispatch', side_effect=AssertionError('launch')):
+        with patch('dradar_dashboard.radar.saved_plan', return_value=None), patch('dradar_dashboard.radar.dispatch', side_effect=AssertionError('launch')):
             with self.assertRaises(radar.RadarError):
                 radar.progress(None, args(command='progress'))
 
@@ -256,13 +256,13 @@ class ErrorSurfaceTests(unittest.TestCase):
     def test_overview_reports_both_rankings_from_same_snapshot(self):
         board = {'contributors': [{'nickname': 'other', 'month_points': 1, 'points': 20},
                                   {'nickname': 'me', 'month_points': 10, 'points': 10}]}
-        with patch('zhongce_radar.radar.parallel', return_value={'identity': {'nickname': 'me'}, 'board': board, 'tasks': {'items': []}, 'submissions': {'items': []}}), patch('zhongce_radar.radar.hot', return_value={'items': []}), patch('zhongce_radar.radar.local_status', return_value={}):
+        with patch('dradar_dashboard.radar.parallel', return_value={'identity': {'nickname': 'me'}, 'board': board, 'tasks': {'items': []}, 'submissions': {'items': []}}), patch('dradar_dashboard.radar.hot', return_value={'items': []}), patch('dradar_dashboard.radar.local_status', return_value={}):
             data = radar.overview(None, args())
         self.assertEqual(data['rank']['rank'], 1)
         self.assertEqual(data['other_rank']['rank'], 2)
 
     def test_partial_overview_never_reports_failed_section_as_zero(self):
-        with patch('zhongce_radar.radar.parallel', return_value={'identity': {'error': 'offline'}, 'board': {}, 'tasks': {'error': 'offline'}, 'submissions': {'items': []}}), patch('zhongce_radar.radar.hot', return_value={'items': []}), patch('zhongce_radar.radar.local_status', return_value={}):
+        with patch('dradar_dashboard.radar.parallel', return_value={'identity': {'error': 'offline'}, 'board': {}, 'tasks': {'error': 'offline'}, 'submissions': {'items': []}}), patch('dradar_dashboard.radar.hot', return_value={'items': []}), patch('dradar_dashboard.radar.local_status', return_value={}):
             data = radar.overview(None, args())
         self.assertTrue(data['partial'])
         self.assertEqual(data['tasks'], {'error': 'offline'})

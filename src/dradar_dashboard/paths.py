@@ -17,11 +17,11 @@ def user_directory(kind):
     else:
         base = Path(os.environ.get('XDG_CACHE_HOME' if kind == 'cache' else 'XDG_CONFIG_HOME',
                                    Path.home()/('.cache' if kind == 'cache' else '.config')))
-    return base/'zhongce-radar'
+    return base/'dradar-dashboard'
 
 
 def config_file():
-    return Path(os.environ.get('RADAR_CONFIG_FILE', user_directory('config')/'config.json')).expanduser().resolve()
+    return Path(os.environ.get('DRADAR_DASHBOARD_CONFIG', user_directory('config')/'config.json')).expanduser().resolve()
 
 
 def read_settings():
@@ -35,4 +35,4 @@ def read_settings():
             raise ValueError
         return value
     except (OSError, ValueError):
-        raise RadarError('客户端配置不是有效 JSON 对象。运行 radar config 查看配置位置。') from None
+        raise RadarError('客户端配置不是有效 JSON 对象。运行 dradar-dashboard config 查看配置位置。') from None

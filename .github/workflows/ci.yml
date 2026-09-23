@@ -22,7 +22,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: uv sync --locked
       - run: uv run --locked python -m unittest discover -s tests -v
-      - run: uv run --locked radar --version
+      - run: uv run --locked dradar-dashboard --version
       - run: uv build
       - shell: bash
-        run: uvx --from ./dist/zhongce_radar_cli-0.1.0-py3-none-any.whl radar --version
+        run: uvx --from ./dist/dradar_dashboard-0.2.0-py3-none-any.whl dradar-dashboard --version

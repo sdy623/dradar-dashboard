@@ -20,7 +20,7 @@ import urllib.parse
 from . import paths
 from . import __version__
 
-ROOT = Path(os.environ.get('RADAR_WORKSPACE', os.getcwd())).resolve()
+ROOT = Path(os.environ.get('DRADAR_DASHBOARD_WORKSPACE', os.getcwd())).resolve()
 HOME = paths.data_home()
 SERVER = 'https://api.codexradar.com'
 EFFORTS = {'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'}
@@ -84,7 +84,7 @@ class API:
         self.home = HOME if home is None else home
 
     def token(self):
-        if token := os.environ.get('RADAR_TOKEN'):
+        if token := os.environ.get('DRADAR_DASHBOARD_TOKEN'):
             SECRETS.add(token)
             return token
         cfg = read_json(self.home / 'config.json')
@@ -379,7 +379,7 @@ def dispatch(mode, arguments, executable=None):
     runtime = paths.read_settings().get('runtime', {})
     prefix = runtime.get('command')
     if not isinstance(prefix, list) or not prefix or not all(isinstance(s, str) and s for s in prefix):
-        raise RadarError('尚未配置 runtime.command 命令数组；未启动任何程序。运行 radar config 查看配置位置。')
+        raise RadarError('尚未配置 runtime.command 命令数组；未启动任何程序。运行 dradar-dashboard config 查看配置位置。')
     command = prefix + list(arguments)
     if mode == 'exact':
         if runtime.get('allow_exact_commands') is not True or not executable:
@@ -596,10 +596,10 @@ def render_section(data):
 
 
 def parser():
-    p = argparse.ArgumentParser(description='雷达 Codex / Claude CLI：默认只读，不依赖模型或 Tenbin 查询网站。')
+    p = argparse.ArgumentParser(prog='dradar-dashboard', description='众测雷达网页信息汇总与官方 DRadar CLI 包装；默认只读查询。')
     p.add_argument('harness', choices=['codex', 'claude-code'])
     p.add_argument('command', nargs='?', default='auto', choices=['auto', 'tui', 'dashboard', 'overview', 'whoami', 'rank', 'hot', 'tasks', 'submissions', 'benchmarks', 'local', 'prepare', 'run', 'progress', 'stop', 'upload', 'config'])
-    p.add_argument('--version', action='version', version='zhongce-radar-cli ' + __version__)
+    p.add_argument('--version', action='version', version='dradar-dashboard ' + __version__)
     p.add_argument('--home', type=Path, help='DRadar 数据目录；默认 DRADAR_HOME 或 ~/.dradar')
     p.add_argument('--config', type=Path, help='客户端配置文件；不包含模型认证')
     p.add_argument('local_action', nargs='?', choices=['status'])
@@ -618,7 +618,7 @@ def parser():
     p.add_argument('--available', action='store_true', help='hot 始终只显示开放格子')
     p.add_argument('--watch', action='store_true')
     p.add_argument('--interval', type=int, default=60)
-    p.add_argument('--plan', help='网站运行码；也可设置 RADAR_PLAN_CODE 避免写入 shell 历史')
+    p.add_argument('--plan', help='网站运行码；也可设置 DRADAR_DASHBOARD_PLAN_CODE 避免写入 shell 历史')
     p.add_argument('--plan-id', help='progress 可直接使用 local status 显示的本地计划 ID')
     p.add_argument('--dry-run', action='store_true')
     p.add_argument('--concurrency', help='保留网站默认；也可明确指定 auto 或 1..40')
@@ -641,14 +641,14 @@ def main(argv=None):
     if args.home:
         HOME = args.home.expanduser().resolve()
     if args.config:
-        os.environ['RADAR_CONFIG_FILE'] = str(args.config.expanduser().resolve())
+        os.environ['DRADAR_DASHBOARD_CONFIG'] = str(args.config.expanduser().resolve())
     os.environ['DRADAR_HOME'] = str(HOME)
     if args.command == 'config':
         print(json.dumps({'data_home':str(HOME), 'config_file':str(paths.config_file()),
                           'cache_directory':str(paths.user_directory('cache'))}, ensure_ascii=False, indent=2))
         return 0
     args.command = select_mode(args.command, sys.stdin.isatty(), sys.stdout.isatty(), args.json, args.watch)
-    args.plan = args.plan or os.environ.get('RADAR_PLAN_CODE')
+    args.plan = args.plan or os.environ.get('DRADAR_DASHBOARD_PLAN_CODE')
     if args.plan:
         SECRETS.add(args.plan)
     if not 1 <= args.limit <= 200 or args.interval < 15:
@@ -657,7 +657,7 @@ def main(argv=None):
         raise RadarError('concurrency 必须为 auto 或 1..40。')
     controls = {'prepare', 'run', 'stop', 'upload'}
     if args.command in controls | {'progress'} and not args.plan and not (args.command == 'progress' and args.plan_id):
-        raise RadarError('需要 --plan 或 RADAR_PLAN_CODE。')
+        raise RadarError('需要 --plan 或 DRADAR_DASHBOARD_PLAN_CODE。')
     if args.watch and args.command in controls:
         raise RadarError('写入操作不允许 --watch。')
     if args.concurrency is not None and args.command != 'run':
