@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.log
+build/
+dist/
+*.spec
+*.egg-info/
+.dradar/
+.cache/
+.env
+config.json
+*-command.json
